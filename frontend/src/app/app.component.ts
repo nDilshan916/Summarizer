@@ -6,7 +6,7 @@ import { DocumentUploadComponent } from './document-upload/document-upload.compo
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, DocumentUploadComponent],  // List standalone components here
+  imports: [RouterOutlet, NavbarComponent, DocumentUploadComponent],  
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'] 
 })

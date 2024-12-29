@@ -1,14 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, OnInit} from '@angular/core';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-document-upload',
   standalone: true,
-  imports: [],
+  imports: [HttpClientModule],
+  template: '<h1>{{ message }}</h1>',
   templateUrl: './document-upload.component.html',
   styleUrl: './document-upload.component.css'
 })
-export class DocumentUploadComponent {
+export class DocumentUploadComponent implements OnInit {
   selectedFile: File | null = null;
+  message = '';
 
   // This function handles the file input change event
   onFileChange(event: Event): void {
@@ -26,4 +29,13 @@ export class DocumentUploadComponent {
       // Call your service to upload the file to the backend or API
     }
   }
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    this.http.get<{ message: string }>('/api/test').subscribe((response) => {
+      this.message = response.message;
+    });
+  }
+
 }
