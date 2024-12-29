@@ -1,0 +1,9 @@
+/* document-upload.component.css */
+.upload-container {
+    
+  }
+  
+  button:disabled {
+    background-color: #cccccc;
+  }
+  
