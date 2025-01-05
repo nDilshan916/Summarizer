@@ -6,6 +6,7 @@ node_modules/
 
 # Ignore environment variable files
 .env
+.venv
 
 # Ignore build directories
 dist/
@@ -22,3 +23,30 @@ Thumbs.db
 # Ignore Python cache files
 __pycache__/
 *.pyc
+
+# Ignore virtual environments
+.venv/
+venv/
+
+# Ignore ML models and checkpoints
+models/
+checkpoints/
+
+# Ignore datasets
+data/
+
+# Ignore temporary files
+*.tmp
+*.bak
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore custom build or output directories (if any)
+output/
+results/
+
+# Ignore any other sensitive or temporary files
+*.env
+*.cfg
+*.yaml
