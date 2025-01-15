@@ -1,3 +1,21 @@
 <app-navbar></app-navbar>
-<app-document-upload></app-document-upload>
+<div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-1/4 bg-gray-100 border-r border-gray-300">
+      <div class="mt-5">
+        <app-sidebar (topicSelected)="onTopicSelected($event)"></app-sidebar>
+      </div>
+    </div>
+  
+    <!-- Main Content -->
+    <div class="w-3/4 p-6">
+        <div *ngIf="!selectedTopic">
+            <!-- Document Upload Interface (shown when no topic is selected) -->
+            <app-document-upload></app-document-upload>
+          </div>
+      <div class="ml-20 mr-20 mt-5">
+        <app-main-content [selectedTopic]="selectedTopic"></app-main-content>
+      </div>
+    </div>
+  </div>
 <router-outlet></router-outlet>

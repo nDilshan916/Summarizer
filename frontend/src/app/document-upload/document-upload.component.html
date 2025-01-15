@@ -1,29 +1,42 @@
-<!-- document-upload.component.html -->
-<div class="container mx-auto p-4 bg-white border border-gray-300 rounded-md">
-  <h2 class="text-xl font-bold">Upload Document</h2>
-  <h1>{{ message }}</h1>
+<!-- File Upload Section -->
+<div class="file-upload-container p-20 h-20 ">
+  <label
+    for="file-upload"
+    class="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-4 rounded-lg cursor-pointer hover:bg-gray-100"
+  >
+    <input
+      id="file-upload"
+      type="file"
+      class="hidden"      
+      (change)="onFileSelected($event)" 
+    />
+    <div
+  [class.dragging]="isDragging"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+  class="drop-zone"
+>
+  Drag and drop a file here
+</div>
 
-  <form (ngSubmit)="onSubmit()" enctype="multipart/form-data">
-    <div class="mb-4">
-      <label for="document" class="block text-sm font-medium text-gray-700"
-        >Choose Document</label
-      >
-      <input
-        type="file"
-        id="document"
-        name="document"
-        (change)="onFileChange($event)"
-        class="mt-1 block w-full text-sm text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
-    </div>
+  </label>
+</div>
 
-    <button
-      type="submit"
-      [disabled]="!selectedFile"
-      class="bg-blue-500 text-white px-4 py-2 rounded-md"
-    >
-      Upload Document
-    </button>
-  </form>
- 
+<!-- Selected File Display and Upload Button -->
+<div *ngIf="selectedFile" class="mt-4">
+  <p class="text-sm">File selected: {{ selectedFile.name }}</p>
+  <button
+    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    (click)="uploadFile()"
+  >
+    Upload
+  </button>
+</div>
+
+<!-- Upload Status Message -->
+<div *ngIf="uploadStatus" class="mt-4">
+  <p [ngClass]="{'text-green-600': uploadStatus === 'success', 'text-red-600': uploadStatus === 'error'}">
+    {{ uploadMessage }}
+  </p>
 </div>

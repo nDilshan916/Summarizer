@@ -1,0 +1,84 @@
+<div class="p-4">
+  <div class="flex space-x-4 mb-4 items-end justify-end">
+    <button (click)="openSearch()" class="text-gray-600 hover:text-gray-800 focus:outline-none text-2xl">
+      <i class="fa fa-search" aria-hidden="true"></i><!-- Font Awesome search icon -->
+    </button>
+    <button 
+      (click)="selectTopic(null)" 
+      class="text-gray-600 hover:text-gray-800 focus:outline-none text-2xl"
+    >
+      <i class="fa fa-upload"></i> <!-- Font Awesome select icon -->
+    </button>
+  </div>
+  
+
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-semibold">Topics</h2>
+    
+  </div>
+
+  <!-- Topics List -->
+  <ul>
+    <li
+      *ngFor="let topic of topics"
+      (click)="selectTopic(topic)"
+      class="group cursor-pointer hover:bg-gray-200 p-2 rounded mb-2 relative"
+    >
+      <div class="flex items-center justify-between">
+        <h3>{{ topic.topic }}</h3>
+        <button
+          (click)="openMenu($event, topic.id)"
+          class="text-gray-600 hover:text-gray-800 focus:outline-none"
+        >
+          &#x22EE;
+        </button>
+      </div>
+
+      <!-- Dropdown Menu -->
+      <div
+        *ngIf="menuOpen[topic.id]"
+        class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-40 z-10"
+      >
+        <button
+          (click)="startRenaming(topic.id)"
+          class="block w-full text-left px-4 py-2 hover:bg-gray-100"
+        >
+          Rename
+        </button>
+        <button
+          (click)="deleteTopic(topic.id)"
+          class="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100"
+        >
+          Delete
+        </button>
+      </div>
+
+      <!-- Rename Input -->
+      <div
+        *ngIf="isRenaming[topic.id]"
+        class="mt-2 flex items-center gap-2"
+      >
+        <input
+          type="text"
+          [(ngModel)]="renameValues[topic.id]"
+          placeholder="Enter new name"
+          class="border border-gray-300 rounded p-2 flex-1 focus:outline-none focus:ring focus:ring-blue-300"
+        />
+        <button
+          (click)="renameTopic(topic.id, renameValues[topic.id])"
+          class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600"
+        >
+          Save
+        </button>
+        <button
+          (click)="cancelRenaming(topic.id)"
+          class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600"
+        >
+          Cancel
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>
+
+

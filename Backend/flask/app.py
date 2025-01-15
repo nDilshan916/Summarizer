@@ -7,15 +7,15 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from PyPDF2 import PdfReader
 from collections import defaultdict
+import uuid
 
 app = Flask(__name__)
 CORS(app)
 
 # MongoDB setup
 client = MongoClient("mongodb://localhost:27017/")
-db = client['AI_Project']
-categories_collection = db['categories']
-topics_collection = db['topics']
+db = client['AI_Project2']
+topics_collection = db['minutes']
 
 # Load pre-trained model
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -30,13 +30,20 @@ def extract_text_from_pdf(file):
 # Additional utility functions remain the same: clean_text, group_related_chunks, group_chunks_by_topic, calculate_similarity, assign_topics.
 def clean_text(text):
     """
-    Cleans text by removing section numbers and extra line breaks.
+    Cleans text by removing section numbers, extra line breaks, and page footers.
     """
-    # Remove section numbers (e.g., "22.39")
+    # Remove section numbers (e.g., "21.46" or "21.46.1")
     text = re.sub(r"^\d+(\.\d+)*\s*", "", text, flags=re.MULTILINE)
+    
+    # Remove common footer patterns
+    text = re.sub(r"Page\s+\d+\s+of\s+\d+", "", text, flags=re.IGNORECASE)  # Remove "Page X of Y"
+    text = re.sub(r"Approved at the .* Executive Board,.*", "", text, flags=re.IGNORECASE)  # Remove approval footers
+    text = re.sub(r"Minutes of the .* Executive Board,.*", "", text, flags=re.IGNORECASE)  # Remove "Minutes of..." footers
+
     # Replace multiple newlines with a single space
     text = re.sub(r"\n+", " ", text).strip()
     return text
+
 
 def group_related_chunks(text):
     """
@@ -67,8 +74,14 @@ def group_related_chunks(text):
 def group_chunks_by_topic(chunks):
     """
     Groups chunks by their main topic and subpoints.
-    Returns a list of dictionaries, each with 'topic' and 'content' keys.
+    Ensures the topic name is not repeated in the content.
+    Returns a list of dictionaries, each with 'topic', 'content', and 'id' keys.
     """
+    EXCLUDED_TOPICS = [
+        "MINUTES OF THE PREVIOUS MEETING AND MATTERS ARISING",
+        "DATES OF FUTURE MEETINGS"
+    ]
+
     topics = []
     current_topic = None
     current_content = []
@@ -76,25 +89,32 @@ def group_chunks_by_topic(chunks):
     for chunk in chunks:
         match = re.match(r"^(\d+\.\d+)\s+(.*)", chunk)
         if match:
-            # Save the previous topic before starting a new one
             if current_topic:
-                topics.append({
-                    "topic": current_topic,
-                    "content": " ".join(current_content).strip()
-                })
+                cleaned_content = clean_text(" ".join(current_content).strip())
+                cleaned_content = cleaned_content.replace(current_topic, "", 1).strip()
+
+                if current_topic not in EXCLUDED_TOPICS:
+                    topics.append({
+                        "id": str(uuid.uuid4()),  # Generate unique ID
+                        "topic": current_topic,
+                        "content": cleaned_content
+                    })
+
             current_topic = clean_text(match.group(2).strip())
             current_content = []
+
         current_content.append(chunk.strip())
 
-    # Append the last topic
-    if current_topic:
+    if current_topic and current_topic not in EXCLUDED_TOPICS:
+        cleaned_content = clean_text(" ".join(current_content).strip())
+        cleaned_content = cleaned_content.replace(current_topic, "", 1).strip()
         topics.append({
+            "id": str(uuid.uuid4()),  # Generate unique ID
             "topic": current_topic,
-            "content": " ".join(current_content).strip()
+            "content": cleaned_content
         })
 
     return topics
-
 
 def calculate_similarity(a, b):
     """
@@ -104,13 +124,23 @@ def calculate_similarity(a, b):
     embedding_b = model.encode([b])
     return float(cosine_similarity(embedding_a, embedding_b)[0][0])
 
-def assign_topics(new_topics, existing_topics):
+def assign_topics(new_topics, existing_data):
     """
-    Assigns new topics to the existing topics based on similarity, while maintaining the structure.
+    Assigns new topics to the existing topics based on similarity and logs the max similarity score for each new topic.
     """
-    final_topics = []
+    existing_topics = existing_data["documents"]
+    final_topics = existing_topics.copy()
+    # Calculate the next document number dynamically
+    max_document_number = max(
+        (
+            doc["document_number"]
+            for topic in existing_topics
+            for doc in topic["contents"]
+        ),
+        default=0,
+    )
+    document_number = max_document_number + 1  # Increment the document number
     threshold = 0.6  # Similarity threshold
-    matched_topics = set()  # Track topics that have been matched
 
     for new_topic_data in new_topics:
         new_topic = new_topic_data["topic"]
@@ -118,84 +148,136 @@ def assign_topics(new_topics, existing_topics):
         max_similarity = 0
         assigned_topic = None
 
-        for prev_topic_data in existing_topics["topics"]:
-            prev_topic = prev_topic_data["topic"]
-            similarity = calculate_similarity(new_topic, prev_topic)
-
+        for existing_topic in final_topics:
+            similarity = calculate_similarity(new_topic, existing_topic["topic"])
             if similarity > max_similarity:
                 max_similarity = similarity
-                assigned_topic = prev_topic_data
+                assigned_topic = existing_topic
+
+        # Print the maximum similarity score for the current new topic
+        if assigned_topic:
+            print(f"Max similarity for new topic '{new_topic}': {max_similarity:.4f} "
+                  f"with previous topic '{assigned_topic['topic']}'")
 
         if max_similarity >= threshold:
-            # Append new content to the existing topic
-            assigned_topic["content"] += " " + new_content
-            assigned_topic["content"] = assigned_topic["content"].strip()
-            matched_topics.add(assigned_topic["topic"])
-            final_topics.append(assigned_topic)
-
-                  
-        else:
-            # Add new topic as it is
-            final_topics.append({
-                "topic": new_topic,
+            # Ensure content is a list
+            if not isinstance(assigned_topic["contents"], list):
+                assigned_topic["contents"] = []
+            assigned_topic["contents"].append({
+                "document_number": document_number,
+                "date": datetime.utcnow().strftime("%Y-%m-%d"),
                 "content": new_content
             })
-        print(f"Max similarity for new topic '{new_topic}': {max_similarity:.4f} with topic '{assigned_topic['topic'] if assigned_topic else None}'") 
-
-    # Add unmatched existing topics
-    for prev_topic_data in existing_topics["topics"]:
-        if prev_topic_data["topic"] not in matched_topics:
-            final_topics.append(prev_topic_data)
-
+        else:
+            # Add as a new topic
+            final_topics.append({
+                "id": str(uuid.uuid4()),  # Generate a unique ID
+                "topic": new_topic,
+                "contents": [
+                    {
+                        "document_number": document_number,
+                        "date": datetime.utcnow().strftime("%Y-%m-%d"),
+                        "content": new_content
+                    }
+                ]
+            })
+        for topic in final_topics:
+            if "id" not in topic:
+                topic["id"] = str(uuid.uuid4())
+    
     return final_topics
 
 
-@app.route('/create-category', methods=['POST'])
-def create_category():
-    data = request.json
-    category_name = data.get('name')
-    if not category_name:
-        return jsonify({"error": "Category name is required"}), 400
-    
-    category = {
-        "name": category_name,
-        "created_at": datetime.utcnow()
-    }
-    category_id = categories_collection.insert_one(category).inserted_id
-    return jsonify({"category_id": str(category_id)})
 
-@app.route('/upload/<category_id>', methods=['POST'])
-def upload_document(category_id):
+
+@app.route('/upload', methods=['POST'])
+def upload_document():
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
     file = request.files['file']
-    
+
     # Extract text from PDF
     extracted_text = extract_text_from_pdf(file)
-    
-    # # Process text
-    # text = re.sub(r"\n+", " ", extracted_text.strip())
-    #print({"Cleaned text: ": text})
     chunks = group_related_chunks(extracted_text)
-    #print({"Chunks: ": chunks})
-    print({"Number of chunks: ": len(chunks)})
+    grouped_topics = group_chunks_by_topic(chunks)
 
-    grouped_topics = group_chunks_by_topic(chunks)    
-    
-    
-    # Check if this is the first document
-    existing_topics = topics_collection.find_one({"category_id": category_id})
-    
-    if not existing_topics:
-        # First document, save directly
-        new_topics = {"category_id": category_id, "topics": grouped_topics, "last_updated": datetime.utcnow()}
-        topics_collection.insert_one(new_topics)
+    # Check if topics collection already has data
+    topics_data = topics_collection.find_one()
+
+    if not topics_data:
+        # First document upload
+        new_topics = []
+        for idx, topic_data in enumerate(grouped_topics, start=1):
+            new_topics.append({
+                "topic": topic_data["topic"],
+                "contents": [
+                    {
+                        "document_number": 1,
+                        "date": datetime.utcnow().strftime("%Y-%m-%d"),
+                        "content": topic_data["content"]
+                    }
+                ]
+            })
+        topics_collection.insert_one({"documents": new_topics, "last_updated": datetime.utcnow()})
     else:
-        # Compare with existing topics
-        final_topics = assign_topics(grouped_topics, existing_topics)
-        topics_collection.update_one({"category_id": category_id}, {"$set": {"topics": final_topics, "last_updated": datetime.utcnow()}})
-    
+        # Append to existing topics
+        updated_topics = assign_topics(grouped_topics, topics_data)
+        topics_collection.update_one(
+        {},
+        {"$set": {"documents": updated_topics, "last_updated": datetime.utcnow()}}
+    )
+
+
     return jsonify({"message": "Document processed successfully."})
+
+@app.route('/get_topics', methods=['GET'])
+def get_topics():
+    try:
+        # Fetch topics from the MongoDB collection
+        topics_data = topics_collection.find_one({}, {"_id": 0})  # Exclude MongoDB's `_id` field
+        if not topics_data:
+            return jsonify({"message": "No topics found"}), 404
+        
+        return jsonify(topics_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/rename_topic', methods=['POST'])
+def rename_topic():
+    data = request.json
+    topic_id = data.get('id')
+    new_name = data.get('new_name')
+
+    if not topic_id or not new_name:
+        return jsonify({"error": "Missing topic ID or new name"}), 400
+
+    result = topics_collection.update_one(
+        {"documents.id": topic_id},
+        {"$set": {"documents.$.topic": new_name}}
+    )
+
+    if result.matched_count:
+        return jsonify({"message": "Topic renamed successfully"})
+    return jsonify({"error": "Topic not found"}), 404
+
+@app.route('/delete_topic', methods=['DELETE'])
+def delete_topic():
+    data = request.json
+    topic_id = data.get('id')
+    
+    print(f"Received topic_id: {topic_id}")
+
+    if not topic_id:
+        return jsonify({"error": "Missing topic ID"}), 400
+
+    result = topics_collection.update_one(
+        {},
+        {"$pull": {"documents": {"id": topic_id}}}
+    )
+
+    if result.modified_count:
+        return jsonify({"message": "Topic deleted successfully"})
+    return jsonify({"error": "Topic not found"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)

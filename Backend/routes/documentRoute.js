@@ -1,8 +1,8 @@
 const express = require('express');
-const { createTopics } = require('../controllers/documentController');
+const { createTopics, getAllTopics} = require('../controllers/documentController');
 const router = express.Router();
 
-router.post('/upload/:categoryId', createTopics);
-
+router.post('/upload', createTopics);
+router.get('/get_topics', getAllTopics);
 
 module.exports = router;

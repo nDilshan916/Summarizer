@@ -1,0 +1,14 @@
+<div *ngIf="selectedTopic; ">
+    <h2 class="text-lg font-semibold mb-4">Topic: {{ selectedTopic.topic }}</h2>
+    <ul>
+      <li
+        *ngFor="let content of selectedTopic.contents"
+        class="mb-4 border-b pb-2"
+      >
+        <strong>Date:</strong> {{ content.date }}<br />
+        <strong>Content:</strong> {{ content.content }}
+      </li>
+    </ul>
+  </div>
+  
+  
