@@ -7,7 +7,8 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from PyPDF2 import PdfReader
 from collections import defaultdict
-import uuid
+from bson import ObjectId
+
 
 app = Flask(__name__)
 CORS(app)
@@ -95,7 +96,7 @@ def group_chunks_by_topic(chunks):
 
                 if current_topic not in EXCLUDED_TOPICS:
                     topics.append({
-                        "id": str(uuid.uuid4()),  # Generate unique ID
+                        "id": str(ObjectId()),  # Generate unique ID
                         "topic": current_topic,
                         "content": cleaned_content
                     })
@@ -109,7 +110,7 @@ def group_chunks_by_topic(chunks):
         cleaned_content = clean_text(" ".join(current_content).strip())
         cleaned_content = cleaned_content.replace(current_topic, "", 1).strip()
         topics.append({
-            "id": str(uuid.uuid4()),  # Generate unique ID
+            "id": str(ObjectId()),  # Generate unique ID
             "topic": current_topic,
             "content": cleaned_content
         })
@@ -171,7 +172,7 @@ def assign_topics(new_topics, existing_data):
         else:
             # Add as a new topic
             final_topics.append({
-                "id": str(uuid.uuid4()),  # Generate a unique ID
+                "id": str(ObjectId()),  # Generate a unique ID
                 "topic": new_topic,
                 "contents": [
                     {
@@ -183,7 +184,7 @@ def assign_topics(new_topics, existing_data):
             })
         for topic in final_topics:
             if "id" not in topic:
-                topic["id"] = str(uuid.uuid4())
+                topic["id"] = str(ObjectId())
     
     return final_topics
 
@@ -278,6 +279,78 @@ def delete_topic():
     if result.modified_count:
         return jsonify({"message": "Topic deleted successfully"})
     return jsonify({"error": "Topic not found"}), 404
+from transformers import pipeline
+
+# Load summarization pipeline
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+@app.route('/generate_summary', methods=['POST'])
+def generate_summary():
+    try:
+        data = request.json
+        topic_id = data.get('id')
+
+        if not topic_id:
+            return jsonify({"error": "Missing topic ID"}), 400
+
+        # Fetch the topic content from the database
+        topic_data = topics_collection.find_one({"documents.id": topic_id}, {"documents.$": 1})
+        if not topic_data or not topic_data.get("documents"):
+            return jsonify({"error": "Topic not found"}), 404
+
+        topic = topic_data["documents"][0]
+        topic_name = topic["topic"]
+        contents = topic["contents"]
+
+        summaries = []
+        for content in contents:
+            summary = summarizer(content["content"], max_length=150, min_length=50, do_sample=False)
+            summaries.append({
+                "date": content["date"],
+                "summary": summary[0]["summary_text"]
+            })
+
+        # Save to summarize collection with topic_id
+        db['summarize'].update_one(
+            {"_id": ObjectId(topic_id)},  # Use topic_id as the primary identifier
+            {
+                "$set": {
+                    "topic_name": topic_name,
+                    "summaries": summaries
+                }
+            },
+            upsert=True  # Create the document if it does not exist
+        )
+
+        return jsonify({"message": "Summaries generated successfully", "topic": topic_name, "summaries": summaries})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
+@app.route('/get_summary/<topic_id>', methods=['GET'])
+def get_summary(topic_id):
+    try:
+        # Query the summarize collection using the topic_id
+        summary_data = db['summarize'].find_one({"_id": ObjectId(topic_id)})
+        
+        if not summary_data:
+            return jsonify({"message": "No summary found for the given topic ID"}), 404
+
+        # Extract the topic name and summaries
+        topic_name = summary_data.get("topic_name", "Unknown Topic")
+        summaries = summary_data.get("summaries", [])
+
+        return jsonify({
+            "topic_name": topic_name,
+            "summaries": summaries
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
