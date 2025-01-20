@@ -4,6 +4,7 @@ import { TopicService } from '../topic.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { TopicUpdateService } from '../topic-update.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -25,11 +26,18 @@ throw new Error('Method not implemented.');
   @Output() topicSelected = new EventEmitter<any>();
   
 
-  constructor(private topicService: TopicService,private renderer: Renderer2, private el: ElementRef) { }
+  constructor(private topicService: TopicService, private topicUpdateService: TopicUpdateService, renderer: Renderer2, private el: ElementRef) { }
 
   ngOnInit(): void {  //NGoNInit is a lifecycle hook that is called after Angular has initialized all data-bound properties of a directive.
     this.loadTopics();
+
+    this.topicUpdateService.topicUpdated$.subscribe(() => {
+      this.loadTopics(); // Reload topics when notified
+    });
   }
+  
+
+  
 
   //load all the topics
  loadTopics(): void {

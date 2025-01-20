@@ -1,42 +1,55 @@
 <!-- File Upload Section -->
-<div class="file-upload-container p-20 h-20 ">
+<div class="file-upload-container p-6 bg-white shadow-md rounded-lg">
   <label
     for="file-upload"
-    class="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-4 rounded-lg cursor-pointer hover:bg-gray-100"
+    class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 p-6 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:border-blue-400"
   >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-10 w-10 text-gray-400 mb-2"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 4v16m8-8H4"
+      />
+    </svg>
+    <span class="text-gray-600 font-medium">Drag and drop a file here</span>
+    <span class="text-sm text-gray-400">or click to select a file</span>
     <input
       id="file-upload"
       type="file"
-      class="hidden"      
-      (change)="onFileSelected($event)" 
+      class="hidden"
+      (change)="onFileSelected($event)"
     />
-    <div
-  [class.dragging]="isDragging"
-  (dragover)="onDragOver($event)"
-  (dragleave)="onDragLeave($event)"
-  (drop)="onDrop($event)"
-  class="drop-zone"
->
-  Drag and drop a file here
-</div>
-
   </label>
 </div>
 
 <!-- Selected File Display and Upload Button -->
-<div *ngIf="selectedFile" class="mt-4">
-  <p class="text-sm">File selected: {{ selectedFile.name }}</p>
+<div *ngIf="selectedFile" class="mt-6 bg-gray-50 p-4 rounded-lg shadow-sm">
+  <p class="text-sm font-medium text-gray-600">
+    File selected: <span class="font-semibold">{{ selectedFile.name }}</span>
+  </p>
   <button
-    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    class="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 transition-all duration-200"
     (click)="uploadFile()"
   >
-    Upload
+    Upload File
   </button>
 </div>
 
 <!-- Upload Status Message -->
 <div *ngIf="uploadStatus" class="mt-4">
-  <p [ngClass]="{'text-green-600': uploadStatus === 'success', 'text-red-600': uploadStatus === 'error'}">
+  <p
+    [ngClass]="{
+      'text-green-600 font-semibold': uploadStatus === 'success',
+      'text-red-600 font-semibold': uploadStatus === 'error'
+    }"
+  >
     {{ uploadMessage }}
   </p>
 </div>
