@@ -14,8 +14,8 @@ app = Flask(__name__)
 CORS(app)
 
 # MongoDB setup
-client = MongoClient("mongodb://localhost:27017/")
-db = client['AI_Project2']
+client = MongoClient("mongodb+srv://ai_project:12345@cluster0.g9oh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client['AI_Project']
 topics_collection = db['minutes']
 
 # Load pre-trained model

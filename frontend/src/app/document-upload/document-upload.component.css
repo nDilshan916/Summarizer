@@ -18,3 +18,34 @@
 button {
   margin-top: 10px;
 }
+
+/* AI-related "generating" text animation */
+.ai-animation {
+  font-weight: 500;
+  font-size: 16px;
+  color: white;  
+  display: inline-block;
+}
+
+.ai-animation::after {
+  content: '.';
+  animation: typingDots 1.5s infinite;
+}
+
+@keyframes typingDots {
+  0% {
+    content: 'Generating Topics';
+  }
+  25% {
+    content: 'Generating Topics.';
+  }
+  50% {
+    content: 'Generating Topics..';
+  }
+  75% {
+    content: 'Generating Topics...';
+  }
+  100% {
+    content: 'Generating Topics';
+  }
+}

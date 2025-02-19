@@ -16,6 +16,7 @@ export class DocumentUploadComponent {
   selectedFile: File | null = null;
   uploadStatus: 'success' | 'error' | null = null;
   uploadMessage: string = '';
+  isUploading: boolean = false; 
 
   constructor(private topicService: TopicService, private topicUpdateService: TopicUpdateService) {}
 
@@ -65,18 +66,26 @@ export class DocumentUploadComponent {
       return;
     }
 
+    this.isUploading = true;  // Start loading animation
+    this.uploadStatus = null;  // Reset previous status
+    this.uploadMessage = 'Uploading...';  // Optional: show an initial message
+
     console.log('Uploading file:', this.selectedFile);
 
     // Assuming this is the file upload logic
     this.topicService.uploadFile(this.selectedFile).subscribe({
       next: (response: any) => {
         console.log('Upload successful:', response);
-
-        // Notify the sidebar component about the topic update
-        this.topicUpdateService.notifyTopicUpdate();
+        this.uploadStatus = 'success';
+        this.uploadMessage = 'File uploaded successfully!';
+        this.isUploading = false;  // Stop loading animation
+        this.topicUpdateService.notifyTopicUpdate(); // Notify sidebar to reload topics
       },
       error: (error: any) => {
         console.error('Error uploading file:', error);
+        this.uploadStatus = 'error';
+        this.uploadMessage = 'Failed to upload file.';
+        this.isUploading = false;  // Stop loading animation
       },
     });
   }

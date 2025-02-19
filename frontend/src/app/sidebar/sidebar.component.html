@@ -1,20 +1,25 @@
-<div class="p-4">
-  <div class="flex space-x-4 mb-4 items-end justify-end">
+<div class="p-4 h-full overflow-y-auto custom-scrollbar">
+  <!-- Header with Web App Name -->
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 tracking-wide">
+      <span class="text-blue-600">Waya</span>Summarizer
+    </h1>
     <button (click)="openSearch()" class="text-gray-600 hover:text-gray-800 focus:outline-none text-2xl">
-      <i class="fa fa-search" aria-hidden="true"></i><!-- Font Awesome search icon -->
-    </button>
-    <button 
-      (click)="selectTopic(null)" 
-      class="text-gray-600 hover:text-gray-800 focus:outline-none text-2xl"
-    >
-      <i class="fa fa-upload"></i> <!-- Font Awesome select icon -->
+      <i class="fa fa-search" aria-hidden="true"></i>
     </button>
   </div>
-  
 
+  <!-- New Upload Button -->
+  <button 
+    (click)="selectTopic(null)" 
+    class="w-full flex items-center justify-center bg-blue-600 text-white py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-all mb-6"
+  >
+    <i class="fa fa-upload mr-2"></i> New Upload
+  </button>
+
+  <!-- Topics Section -->
   <div class="flex justify-between items-center mb-4">
-    <h2 class="text-lg font-semibold">Topics</h2>
-    
+    <h2 class="text-lg font-semibold text-gray-700">Topics</h2>
   </div>
 
   <!-- Topics List -->
@@ -22,17 +27,16 @@
     <li
       *ngFor="let topic of topics"
       (click)="selectTopic(topic)"
-      class="group cursor-pointer hover:bg-gray-200 p-2 rounded mb-2 relative"
+      [class.bg-gray-300]="selectedTopic === topic"
+      class="group cursor-pointer hover:bg-gray-200 p-3 rounded-lg mb-2 relative transition-all flex items-center justify-between"
     >
-      <div class="flex items-center justify-between">
-        <h3>{{ topic.topic }}</h3>
-        <button
-          (click)="openMenu($event, topic.id)"
-          class="text-gray-600 hover:text-gray-800 focus:outline-none"
-        >
-          &#x22EE;
-        </button>
-      </div>
+      <h3 class="text-gray-800 font-medium">{{ topic.topic }}</h3>
+      <button
+        (click)="openMenu($event, topic.id)"
+        class="text-gray-600 hover:text-gray-800 focus:outline-none"
+      >
+        &#x22EE;
+      </button>
 
       <!-- Dropdown Menu -->
       <div
@@ -54,10 +58,7 @@
       </div>
 
       <!-- Rename Input -->
-      <div
-        *ngIf="isRenaming[topic.id]"
-        class="mt-2 flex items-center gap-2"
-      >
+      <div *ngIf="isRenaming[topic.id]" class="mt-2 flex items-center gap-2">
         <input
           type="text"
           [(ngModel)]="renameValues[topic.id]"
@@ -80,5 +81,3 @@
     </li>
   </ul>
 </div>
-
-

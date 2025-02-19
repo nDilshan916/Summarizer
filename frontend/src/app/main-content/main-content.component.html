@@ -1,34 +1,51 @@
-<div *ngIf="selectedTopic">
-  <!-- Display the selected topic details -->
-  <h2 class="text-lg font-semibold mb-4">Topic: {{ selectedTopic.topic }}</h2>
-  <ul>
-    <li *ngFor="let content of selectedTopic.contents" class="mb-4 border-b pb-2">
-      <strong>Date:</strong> {{ content.date }}<br />
-      <strong>Content:</strong> {{ content.content }}
+<div *ngIf="selectedTopic" class="p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+  <!-- Topic Title -->
+  <h2 class="text-4xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+    <span class="text-blue-600 text-5xl">📌</span> {{ selectedTopic.topic }}
+  </h2>
+
+  <!-- Topic Content List -->
+  <ul class="space-y-6">
+    <li *ngFor="let content of selectedTopic.contents" 
+        class="p-5 bg-gray-50 border border-gray-300 rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+      <div class="flex justify-between items-center mb-3">
+        <span class="px-4 py-1 text-sm font-medium text-gray-700 bg-blue-100 rounded-full">
+          📅 {{ content.date }}
+        </span>
+      </div>
+      <p class="text-lg text-gray-800 leading-relaxed">
+        {{ content.content }}
+      </p>
     </li>
   </ul>
 
   <!-- Generate Summary Button -->
-  <button
-    class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    (click)="generateSummary()"
-    [disabled]="isLoading"
-  >
-    {{ isLoading ? 'Generating Summary...' : 'Generate Summary' }}
+  <button 
+    class="mt-8 w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-semibold rounded-xl shadow-md hover:from-blue-600 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+    (click)="generateSummary()" 
+    [disabled]="isLoading">
+    <span *ngIf="isLoading" class="animate-spin text-2xl">
+      🔄
+    </span>
+    <span *ngIf="!isLoading">✨ Generate Summary</span>
   </button>
 
-  <!-- Display the summary if available for the selected topic -->
-<div
-*ngIf="selectedTopic && summaries[selectedTopic.id] && summaries[selectedTopic.id].length > 0"
-class="mt-4 p-4 bg-gray-100 border rounded"
->
-<h3 class="text-lg font-semibold mb-2">Summary</h3>
-<ul>
-  <li *ngFor="let s of summaries[selectedTopic.id]">
-    <strong>Date:</strong> {{ s.date }}<br />
-    <strong>Summary:</strong> {{ s.summary }}
-  </li>
-</ul>
-</div>
-
+  <!-- Display the summary if available -->
+  <div *ngIf="selectedTopic && summaries[selectedTopic.id]?.length" 
+       class="mt-8 p-6 bg-gray-100 border border-gray-300 rounded-2xl shadow-md">
+    <h3 class="text-3xl font-semibold text-gray-900 mb-5">📝 Summary</h3>
+    <ul class="space-y-6">
+      <li *ngFor="let s of summaries[selectedTopic.id]" 
+          class="p-5 bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-lg transition-shadow">
+        <div class="flex justify-between items-center mb-3">
+          <span class="px-4 py-1 text-sm font-medium text-gray-700 bg-green-100 rounded-full">
+            📅 {{ s.date }}
+          </span>
+        </div>
+        <p class="text-lg text-gray-800 leading-relaxed">
+          {{ s.summary }}
+        </p>
+      </li>
+    </ul>
+  </div>
 </div>
