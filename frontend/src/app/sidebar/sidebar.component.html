@@ -1,10 +1,10 @@
 <div class="p-4 h-full overflow-y-auto custom-scrollbar">
   <!-- Header with Web App Name -->
   <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-gray-800 tracking-wide">
+    <h1 class="text-3xl font-bold text-gray-800 tracking-wide">
       <span class="text-blue-600">Waya</span>Summarizer
     </h1>
-    <button (click)="openSearch()" class="text-gray-600 hover:text-gray-800 focus:outline-none text-2xl">
+    <button (click)="openSearch()" class="text-gray-600 hover:text-gray-800 focus:outline-none text-3xl">
       <i class="fa fa-search" aria-hidden="true"></i>
     </button>
   </div>
@@ -19,7 +19,7 @@
 
   <!-- Topics Section -->
   <div class="flex justify-between items-center mb-4">
-    <h2 class="text-lg font-semibold text-gray-700">Topics</h2>
+    <h2 class="text-lg font-bold text-gray-900">TOPICS</h2>
   </div>
 
   <!-- Topics List -->
@@ -30,7 +30,8 @@
       [class.bg-gray-300]="selectedTopic === topic"
       class="group cursor-pointer hover:bg-gray-200 p-3 rounded-lg mb-2 relative transition-all flex items-center justify-between"
     >
-      <h3 class="text-gray-800 font-medium">{{ topic.topic }}</h3>
+    <h3 class="text-gray-600 font-medium">{{ formatTitle(topic.topic) }}</h3>
+
       <button
         (click)="openMenu($event, topic.id)"
         class="text-gray-600 hover:text-gray-800 focus:outline-none"

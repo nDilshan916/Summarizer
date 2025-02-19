@@ -1,7 +1,7 @@
 <div *ngIf="selectedTopic" class="p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
   <!-- Topic Title -->
   <h2 class="text-4xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-    <span class="text-blue-600 text-5xl">📌</span> {{ selectedTopic.topic }}
+    <span class="text-blue-600 text-3xl">📌</span> {{ selectedTopic.topic }}
   </h2>
 
   <!-- Topic Content List -->
@@ -9,7 +9,7 @@
     <li *ngFor="let content of selectedTopic.contents" 
         class="p-5 bg-gray-50 border border-gray-300 rounded-xl shadow-sm hover:shadow-lg transition-shadow">
       <div class="flex justify-between items-center mb-3">
-        <span class="px-4 py-1 text-sm font-medium text-gray-700 bg-blue-100 rounded-full">
+        <span class="px-4 py-1 text-lg font-medium text-gray-700 bg-blue-100 rounded-full">
           📅 {{ content.date }}
         </span>
       </div>

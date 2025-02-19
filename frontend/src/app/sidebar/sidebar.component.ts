@@ -146,4 +146,15 @@ throw new Error('Method not implemented.');
       })
   }
 
+  formatTitle(title: string): string {
+    if (!title) return ''; 
+    return title
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  
+  
+
 }
