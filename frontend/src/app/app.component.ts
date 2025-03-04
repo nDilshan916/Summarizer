@@ -6,12 +6,13 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { HttpClientModule } from '@angular/common/http';
 import { MainContentComponent } from './main-content/main-content.component';
 import { CommonModule } from '@angular/common';
+import { SearchComponent } from "./search/search.component";
 
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, DocumentUploadComponent,SidebarComponent, HttpClientModule, MainContentComponent, CommonModule],  
+  imports: [RouterOutlet, NavbarComponent, DocumentUploadComponent, SidebarComponent, HttpClientModule, MainContentComponent, CommonModule, SearchComponent],  
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'] 
 })

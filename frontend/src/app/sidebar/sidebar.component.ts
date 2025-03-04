@@ -1,5 +1,5 @@
-import { Component, ElementRef, HostListener, output, Renderer2 } from '@angular/core';
-import { OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, ElementRef, HostListener, Output, EventEmitter } from '@angular/core';
+import { OnInit } from '@angular/core';
 import { TopicService } from '../topic.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -9,58 +9,73 @@ import { TopicUpdateService } from '../topic-update.service';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, HttpClientModule,  FormsModule,],
+  imports: [CommonModule, HttpClientModule, FormsModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
 })
 export class SidebarComponent implements OnInit {
-openSearch() {
-throw new Error('Method not implemented.');
-}
   topics: any[] = [];
+  filteredTopics: any[] = [];
   menuVisible: { [key: string]: boolean } = {};
-  menuOpen: { [key: string]: boolean } = {}; //menuOpen is a dictionary that stores the state of the menu (open or closed) for each topic.
-  isRenaming: { [key: string]: boolean } = {}; //isRenaming is a dictionary that stores the state of the renaming input field for each topic.
-  renameValues: { [key: string]: string } = {}; //renameValues is a dictionary that stores the new name for each topic.
+  menuOpen: { [key: string]: boolean } = {};
+  isRenaming: { [key: string]: boolean } = {};
+  renameValues: { [key: string]: string } = {};
   selectedTopic: any = null;
   @Output() topicSelected = new EventEmitter<any>();
-  
+  searchVisible: boolean = false;
+  searchQuery: string = '';
+  isConfirmingDelete: boolean = false;
+  topicToDelete: string | null = null;
 
-  constructor(private topicService: TopicService, private topicUpdateService: TopicUpdateService, renderer: Renderer2, private el: ElementRef) { }
 
-  ngOnInit(): void {  //NGoNInit is a lifecycle hook that is called after Angular has initialized all data-bound properties of a directive.
+  constructor(
+    private topicService: TopicService,
+    private topicUpdateService: TopicUpdateService,
+    private el: ElementRef
+  ) {}
+
+  ngOnInit(): void {
     this.loadTopics();
 
     this.topicUpdateService.topicUpdated$.subscribe(() => {
-      this.loadTopics(); // Reload topics when notified
+      this.loadTopics();
     });
   }
-  
 
-  
-
-  //load all the topics
- loadTopics(): void {
-  this.topicService.getTopics().subscribe({
-    next: (data) => {
-      this.topics = data.documents || [];
-    },
-    error: (error) => {
-      console.error('Error fetching topics:', error);
-    }
-  });
- }
-
- //select a topic
-  selectTopic(topic: any): void {
-    this.topicSelected.emit(topic);
-    this.selectedTopic = topic; // Set the selected topic to the clicked topic
-    console.log('Topic selected:', topic);
+  openSearch(): void {
+    this.searchVisible = !this.searchVisible;
+    this.searchQuery = '';
+    this.filteredTopics = this.topics;
   }
 
-  showMenu(topicId: string): void {
-    this.menuVisible[topicId] = true;
-    
+  filterTopics(): void {
+    this.filteredTopics = this.topics.filter((topic) =>
+      topic.topic.toLowerCase().includes(this.searchQuery.toLowerCase())
+    );
+  }
+
+  loadTopics(): void {
+    this.topicService.getTopics().subscribe({
+      next: (data) => {
+        this.topics = data.documents || [];
+        this.filteredTopics = this.topics;
+      },
+      error: (error) => {
+        console.error('Error fetching topics:', error);
+      },
+    });
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.filteredTopics = this.topics;
+  }
+  
+
+  selectTopic(topic: any): void {
+    this.topicSelected.emit(topic);
+    this.selectedTopic = topic;
+    console.log('Topic selected:', topic);
   }
 
   toggleMenu(topicId: string): void {
@@ -68,93 +83,102 @@ throw new Error('Method not implemented.');
     console.log(`Toggled menu for topicId: ${topicId}`);
   }
 
-  preventHideMenu(topicId:  string): void {
-    this.menuVisible[topicId] = true;
-    
-  }
-  
-  hideMenu(topicId: string): void {
-    this.menuVisible[topicId] = false;
-  }
-  
-  openMenu(event: MouseEvent, topicId: string) {
-    // Prevents the event from propagating to the document body and triggering the outside click
+  openMenu(event: MouseEvent, topicId: string): void {
     event.stopPropagation();
-  
-    // Close any other open menu and open the clicked menu
     this.menuOpen = { [topicId]: !this.menuOpen[topicId] };
   }
-  
-  // Close the menu if click is outside
+
   @HostListener('document:click', ['$event'])
-  closeMenuOnClickOutside(event: MouseEvent) {
+  closeMenuOnClickOutside(event: MouseEvent): void {
     if (!this.el.nativeElement.contains(event.target)) {
-      this.menuOpen = {}; // Close all menus
+      this.menuOpen = {};
     }
   }
 
-  //open the renaming input field for a topic
-  startRenaming(topicId: string): void{
-    this.isRenaming[topicId] =  true;
+  startRenaming(topicId: string): void {
+    this.isRenaming[topicId] = true;
     this.renameValues[topicId] = '';
-    this.menuOpen[topicId] = false; //close the menu when renaming starts
+    this.menuOpen[topicId] = false;
   }
 
-  //cancel renaming a topic
-  cancelRenaming(topicId: string) {
-    this.isRenaming[topicId] = false; // Disable renaming mode
-    this.renameValues[topicId] = ''; // Clear input
+  cancelRenaming(topicId: string): void {
+    this.isRenaming[topicId] = false;
+    this.renameValues[topicId] = '';
   }
 
-  //rename a topic
-  renameTopic(id: string, newName: string): void{
-    if(!newName){
+  renameTopic(id: string, newName: string): void {
+    if (!newName) {
       console.error('New name cannot be empty');
-      return; //return statement is used to end the execution of the function and specifies a value to be returned to the function caller.
+      return;
     }
 
-    this.topicService.renameTopic(id,newName).subscribe({ //subscribe is used to subscribe to an observable which means that it will listen to the observable and whenever the observable emits a value, it will be sent to the subscriber.
+    this.topicService.renameTopic(id, newName).subscribe({
       next: () => {
         console.log('Topic renamed successfully');
-        this.loadTopics(); //reload the topics after renaming
-        this.isRenaming[id] = false; // Disable renaming mode
-        this.menuOpen = {}; // Close the menu
+        this.loadTopics();
+        this.isRenaming[id] = false;
+        this.menuOpen = {};
       },
       error: (error) => {
         console.error('Error renaming topic:', error);
-      }
-    })
-    this.renameValues[id] = ''; // Clear input
+      },
+    });
+
+    this.renameValues[id] = '';
   }
 
-  //delete a topic
-  deleteTopic(id: string) : void{
-      if(!id){
-        console.error('ID cannot be empty');
-        return;
-      }
-
-
-      this.topicService.deleteTopic(id).subscribe({
-        next: () => {
-          console.log('Topic deleted successfully');
-          this.loadTopics(); //reload the topics after deleting
-        },
-        error: (error) => {
-          console.error('Error deleting topic:', error);
-        }
-      })
+  deleteTopic(id: string): void {
+    if (!id) {
+      console.error('ID cannot be empty');
+      return;
+    }
+  
+    const confirmDelete = window.confirm('Are you sure you want to delete this topic?');
+    if (!confirmDelete) return;
+  
+    this.topicService.deleteTopic(id).subscribe({
+      next: () => {
+        console.log('Topic deleted successfully');
+        this.loadTopics();
+      },
+      error: (error) => {
+        console.error('Error deleting topic:', error);
+      },
+    });
   }
-
+  
+  openDeleteConfirmation(id: string): void {
+    this.isConfirmingDelete = true;
+    this.topicToDelete = id;
+  }
+  
+  confirmDelete(): void {
+    if (!this.topicToDelete) return;
+  
+    this.topicService.deleteTopic(this.topicToDelete).subscribe({
+      next: () => {
+        console.log('Topic deleted successfully');
+        this.loadTopics();
+        this.isConfirmingDelete = false;
+        this.topicToDelete = null;
+      },
+      error: (error) => {
+        console.error('Error deleting topic:', error);
+      },
+    });
+  }
+  
+  cancelDelete(): void {
+    this.isConfirmingDelete = false;
+    this.topicToDelete = null;
+  }
+  
   formatTitle(title: string): string {
-    if (!title) return ''; 
+    if (!title) return '';
     return title
       .toLowerCase()
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
-  
-  
-
 }

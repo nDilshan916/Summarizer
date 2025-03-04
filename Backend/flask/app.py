@@ -39,7 +39,7 @@ def clean_text(text):
     # Remove common footer patterns
     text = re.sub(r"Page\s+\d+\s+of\s+\d+", "", text, flags=re.IGNORECASE)  # Remove "Page X of Y"
     text = re.sub(r"Approved at the .* Executive Board,.*", "", text, flags=re.IGNORECASE)  # Remove approval footers
-    text = re.sub(r"Minutes of the .* Executive Board,.*", "", text, flags=re.IGNORECASE)  # Remove "Minutes of..." footers
+    text = re.sub(r"WAYAMBA UNIV ERSITY .* OF SRI LANKA,.*", "", text, flags=re.IGNORECASE)  # Remove "Minutes of..." footers
 
     # Replace multiple newlines with a single space
     text = re.sub(r"\n+", " ", text).strip()
@@ -141,7 +141,7 @@ def assign_topics(new_topics, existing_data):
         default=0,
     )
     document_number = max_document_number + 1  # Increment the document number
-    threshold = 0.6  # Similarity threshold
+    threshold = 0.7  # Similarity threshold
 
     for new_topic_data in new_topics:
         new_topic = new_topic_data["topic"]

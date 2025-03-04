@@ -1,0 +1,24 @@
+<div class="search-bar relative">
+    <input
+      type="text"
+      [(ngModel)]="searchQuery"
+      placeholder="Search topics..."
+      (input)="onSearch()"
+      class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring focus:ring-blue-300"
+    />
+    <button
+      *ngIf="searchQuery"
+      (click)="clearSearch()"
+      class="text-gray-600 hover:text-gray-800 focus:outline-none absolute right-10 top-1/2 transform -translate-y-1/2"
+    >
+      <i class="fa fa-times"></i>
+    </button>
+    <button
+      *ngIf="!searchQuery"
+      (click)="onSearch()"
+      class="text-gray-600 hover:text-gray-800 focus:outline-none absolute right-3 top-1/2 transform -translate-y-1/2"
+    >
+      <i class="fa fa-search"></i>
+    </button>
+  </div>
+  
