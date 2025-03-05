@@ -27,13 +27,24 @@
     <span *ngIf="isLoading" class="animate-spin text-2xl">
       🔄
     </span>
-    <span *ngIf="!isLoading">✨ Generate Summary</span>
+    <span *ngIf="!isLoading">✨ Generate Content-wise Summary</span>
   </button>
 
-  <!-- Display the summary if available -->
-  <div *ngIf="selectedTopic && summaries[selectedTopic.id]?.length" 
+  <!-- Generate Combined Summary Button -->
+  <button 
+    class="mt-4 w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-green-500 to-green-700 text-white text-lg font-semibold rounded-xl shadow-md hover:from-green-600 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+    (click)="generateCombinedSummary()" 
+    [disabled]="isCombinedLoading">
+    <span *ngIf="isCombinedLoading" class="animate-spin text-2xl">
+      🔄
+    </span>
+    <span *ngIf="!isCombinedLoading">✨ Generate Overall Summary</span>
+  </button>
+
+  <!-- Display content-wise summaries if active -->
+  <div *ngIf="activeSummaryType === 'content' && summaries[selectedTopic.id]?.length" 
        class="mt-8 p-6 bg-gray-100 border border-gray-300 rounded-2xl shadow-md">
-    <h3 class="text-3xl font-semibold text-gray-900 mb-5">📝 Summary</h3>
+    <h3 class="text-3xl font-semibold text-gray-900 mb-5">📝 Content-Wise Summaries</h3>
     <ul class="space-y-6">
       <li *ngFor="let s of summaries[selectedTopic.id]" 
           class="p-5 bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-lg transition-shadow">
@@ -47,5 +58,14 @@
         </p>
       </li>
     </ul>
+  </div>
+
+  <!-- Display combined summary if active -->
+  <div *ngIf="activeSummaryType === 'combined' && combinedSummary" 
+       class="mt-8 p-6 bg-gray-100 border border-gray-300 rounded-2xl shadow-md">
+    <h3 class="text-3xl font-semibold text-gray-900 mb-5">📝 Combined Summary</h3>
+    <p class="text-lg text-gray-800 leading-relaxed">
+      {{ combinedSummary }}
+    </p>
   </div>
 </div>

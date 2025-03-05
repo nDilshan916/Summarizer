@@ -349,7 +349,67 @@ def get_summary(topic_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/generate_combined_summary', methods=['POST'])
+def generate_combined_summary():
+    try:
+        data = request.json
+        topic_id = data.get('id')
 
+        if not topic_id:
+            return jsonify({"error": "Missing topic ID"}), 400
+
+        # Fetch the topic content from the database
+        topic_data = topics_collection.find_one({"documents.id": topic_id}, {"documents.$": 1})
+        if not topic_data or not topic_data.get("documents"):
+            return jsonify({"error": "Topic not found"}), 404
+
+        topic = topic_data["documents"][0]
+        topic_name = topic["topic"]
+        contents = topic["contents"]
+
+        # Combine all content into a single string
+        combined_content = " ".join([content["content"] for content in contents])
+
+        # Generate a summary for the combined content
+        summary = summarizer(combined_content, max_length=150, min_length=50, do_sample=False)
+
+        # Save the combined summary to the summarize collection
+        db['summarize'].update_one(
+            {"_id": ObjectId(topic_id)},  # Use topic_id as the primary identifier
+            {
+                "$set": {
+                    "topic_name": topic_name,
+                    "combined_summary": summary[0]["summary_text"]
+                }
+            },
+            upsert=True  # Create the document if it does not exist
+        )
+
+        return jsonify({"message": "Combined summary generated successfully", "topic": topic_name, "combined_summary": summary[0]["summary_text"]})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/get_combined_summary/<topic_id>', methods=['GET'])
+def get_combined_summary(topic_id):
+    try:
+        # Query the summarize collection using the topic_id
+        summary_data = db['summarize'].find_one({"_id": ObjectId(topic_id)})
+        
+        if not summary_data:
+            return jsonify({"message": "No combined summary found for the given topic ID"}), 404
+
+        # Extract the topic name and combined summary
+        topic_name = summary_data.get("topic_name", "Unknown Topic")
+        combined_summary = summary_data.get("combined_summary", "")
+
+        return jsonify({
+            "topic_name": topic_name,
+            "combined_summary": combined_summary
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

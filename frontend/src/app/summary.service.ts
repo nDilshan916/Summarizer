@@ -17,4 +17,9 @@ export class SummaryService {
   getSummary(topicId: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/get_summary/${topicId}`);
   }
+
+  // New method to generate combined summary
+  generateCombinedSummary(topicId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/generate_combined_summary`, { id: topicId });
+  }
 }
