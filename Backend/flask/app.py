@@ -14,7 +14,7 @@ app = Flask(__name__)
 CORS(app)
 
 # MongoDB setup
-client = MongoClient("mongodb+srv://ai_project:12345@cluster0.g9oh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("mongodb+srv://navindudilshan19:3zwm6yMU6nQ3FqXz@cluster0.sbxfd.mongodb.net/AI_Project?retryWrites=true&w=majority")
 db = client['AI_Project']
 topics_collection = db['minutes']
 

@@ -10,7 +10,7 @@ export class TopicService {
   private deleteUrl = 'http://127.0.0.1:5000/delete_topic';
   private uploadUrl = 'http://localhost:3000/upload';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getTopics(): Observable<any> {
     return this.http.get(this.apiUrl);
